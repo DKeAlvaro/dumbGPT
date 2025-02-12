@@ -110,18 +110,20 @@ class Block(nn.Module):
         return x
 
 class dumbGPT(nn.Module):
-    def __init__(self, vocab_size):
+    def __init__(self, vocab_size):#
         super().__init__()
-        # each token directly reads off the logits for the next token from a lookup table
+        # Here we are creating the building blocks of our model
+        # We are saying, hey our dumbGPT has these components (what comes after the self.)
+        # In the forward method (nn. has a shortcut where forward(x) = self(x)) 
+        # you can see more in detail how these components are used
         self.token_embedding_table = nn.Embedding(vocab_size, N_EMBD)
         self.position_embedding_table = nn.Embedding(BLOCK_SIZE, N_EMBD)
         self.blocks = nn.Sequential(*[Block(N_EMBD, n_head=N_HEAD) for _ in range(N_LAYER)])
-        self.ln_f = nn.LayerNorm(N_EMBD) # final layer norm
+        self.ln_f = nn.LayerNorm(N_EMBD) 
         self.lm_head = nn.Linear(N_EMBD, vocab_size)
 
     def forward(self, idx, targets=None):
         B, T = idx.shape
-
         # idx and targets are both (B,T) tensor of integers
         tok_emb = self.token_embedding_table(idx) # (B,T,C)
         pos_emb = self.position_embedding_table(torch.arange(T).to(DEVICE)) # (T,C)

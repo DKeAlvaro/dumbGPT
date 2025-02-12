@@ -7,6 +7,25 @@ import os
 
 
 def from_train_to_inference():
+    print("This is a simple tutorial on how to apply GPT models to a given problem")
+    print("The only requirement is a medium level of python and some surface intuition on how GPT models work.")
+    print("(Basically that GPT models predict the next token given a starting sequence)")
+    print("It is not intended to be a full guide of the architecture")
+    print("Instead, it is more like a tutorial on how to get started with these")
+    print("Some initial notes on how to study this kind of repository:")
+    print("In the beginning, you will be blown away by the massive amount of code there is available")
+    print("Dont worry, it's normal.")
+    print("It is CRUCIAL that you start from TOP to BOTTOM:")
+    print("Start by COLLAPSING all the methods and classes")
+    print("e.g you go to dumbGPT then say ok there are many classes: Head, FeedForward, Block, dumbGPT, etc...")
+    print("Then, IDENTIFY, which ones are the MOST important ones")
+    print("In this case, dumbGPT is the most important one.")
+    print("Then, see the methods it contains and understand their purpose:")
+    print("Ok, dumbgpt has a forward, a generate and an init method. What could they be for?")
+    print("And so on...")
+    print("In this specific repo, you can start by reading the from_train_to_inference method")
+    print("This will cover all the steps from pretraining until inference of a GPT model.")
+    print("Once you finish it, you can go to each method's definitions to get a deeper understanding")
 
     print("\033[DATA PROCESSING:\033[0m")
     print("We first save the .txt observations to a list of lists")
@@ -50,6 +69,10 @@ def from_train_to_inference():
     print(f"There are vocab_size ({vocab_size}) entries represented with N_EMBD ({N_EMBD}) features.")
     print(f"The fact that token_embedding_table is an instance from nn.module implies that its values will be updated when training")
     print(f"Same goes for the rest of the components")
+    print("Also, note how dumbGPT inherits the nn.module")
+    print("Whenever making your own model you need to do it")
+    print("This way, we can add building blocks to our base model (see implementation)")
+    print("Keep track of the parameters, optimize them and many more things")
 
     print("\033[1mMODEL TRAINING: \033[0m") 
     print("We create our Training instance and we assign it our model params")
