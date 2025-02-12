@@ -3,29 +3,38 @@ import torch.nn as nn
 from torch.nn import functional as F
 from config import *
 
-def get_batch(split, train_data, val_data):
-    # generate a small batch of data of inputs x and targets y
-    data = train_data if split == 'train' else val_data
-    ix = torch.randint(len(data) - BLOCK_SIZE, (BATCH_SIZE,))
-    x = torch.stack([data[i:i+BLOCK_SIZE] for i in ix])
-    y = torch.stack([data[i+1:i+BLOCK_SIZE+1] for i in ix])
+
+def get_batch(data, split_idx):
+    """Generate a small batch of data of inputs x and targets y"""
+    # Get random starting indices
+    ix = torch.randint(0, split_idx - BLOCK_SIZE, (BATCH_SIZE,))
+    
+    # Get sequences of consecutive tokens
+    x = data[ix]  # Shape: (batch_size, block_size)
+    y = data[ix + 1]  # Shape: (batch_size, block_size)
+    
+    # Move to device
     x, y = x.to(DEVICE), y.to(DEVICE)
     return x, y
-
+# This disables gradient computation
 @torch.no_grad()
-def estimate_loss(model, train_data, val_data):
+def estimate_loss(model, data, train_idx):
+    """Estimate loss on train and validation sets"""
     out = {}
     model.eval()
     for split in ['train', 'val']:
         losses = torch.zeros(EVAL_ITERS)
-
         for k in range(EVAL_ITERS):
-            X, Y = get_batch(split)
+            if split == 'train':
+                X, Y = get_batch(data[:train_idx], train_idx)
+            else:
+                X, Y = get_batch(data[train_idx:], len(data) - train_idx)
             logits, loss = model(X, Y)
             losses[k] = loss.item()
         out[split] = losses.mean()
     model.train()
     return out
+
 
 class Head(nn.Module):
     """ one head of self-attention """
@@ -69,6 +78,7 @@ class MultiHeadAttention(nn.Module):
 
 class FeedFoward(nn.Module):
     """ a simple linear layer followed by a non-linearity """
+
 
     def __init__(self, N_EMBD):
         super().__init__()
@@ -114,7 +124,7 @@ class dumbGPT(nn.Module):
 
         # idx and targets are both (B,T) tensor of integers
         tok_emb = self.token_embedding_table(idx) # (B,T,C)
-        pos_emb = self.position_embedding_table(torch.arange(T, DEVICE=DEVICE)) # (T,C)
+        pos_emb = self.position_embedding_table(torch.arange(T).to(DEVICE)) # (T,C)
         x = tok_emb + pos_emb # (B,T,C)
         x = self.blocks(x) # (B,T,C)
         x = self.ln_f(x) # (B,T,C)
@@ -146,3 +156,18 @@ class dumbGPT(nn.Module):
             # append sampled index to the running sequence
             idx = torch.cat((idx, idx_next), dim=1) # (B, T+1)
         return idx
+    
+    def print_model_size(self):
+        detailed_params = {name: p.numel() for name, p in self.named_parameters()}
+        print("Model Size by Component:")
+        print("=" * 30)
+        components = {}
+        for name, size in detailed_params.items():
+            component_name = name.split('.')[0]
+            if component_name not in components:
+                components[component_name] = 0
+            components[component_name] += size
+        
+        for component, size in components.items():
+            print(f"{component}: {size} parameters")
+        print("=" * 30)
